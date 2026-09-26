@@ -55,7 +55,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Invalid/expired token -> leave unauthenticated, let Security handle the 401
             SecurityContextHolder.clearContext();
         }
 
