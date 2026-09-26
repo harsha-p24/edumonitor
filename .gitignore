@@ -1,0 +1,36 @@
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / React
+node_modules/
+frontend/build/
+frontend/dist/
+npm-debug.log*
+
+# Env / secrets
+.env
+*.env.local
+application-local.yml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Docker
+*.pid
+
+# Logs
+*.log
+
+# Uploads/reports runtime content (keep folder, ignore contents)
+uploads/*
+!uploads/.gitkeep
+reports/*
+!reports/.gitkeep
