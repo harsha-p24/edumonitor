@@ -1,6 +1,7 @@
 package com.sdlms.monitoring;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ public class DashboardService {
         this.monitoringEventRepository = monitoringEventRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<StudentActivityRow> getKeyboardActivity(Long labId) {
         return monitoringEventRepository.findActiveByLabId(labId).stream()
                 .map(e -> new StudentActivityRow(
@@ -26,6 +28,7 @@ public class DashboardService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<StudentActivityRow> getMouseActivity(Long labId) {
         return monitoringEventRepository.findActiveByLabId(labId).stream()
                 .map(e -> new StudentActivityRow(
@@ -39,6 +42,7 @@ public class DashboardService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<StudentActivityRow> getCopyPasteActivity(Long labId) {
         return monitoringEventRepository.findActiveByLabId(labId).stream()
                 .map(e -> new StudentActivityRow(
@@ -52,6 +56,7 @@ public class DashboardService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<StudentActivityRow> getIdleStudents(Long labId) {
         return monitoringEventRepository.findActiveByLabId(labId).stream()
                 .map(e -> new StudentActivityRow(
