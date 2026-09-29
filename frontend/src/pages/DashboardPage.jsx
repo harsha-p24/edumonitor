@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axiosClient from '../api/axiosClient';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 const TABS = [
   { key: 'keyboard-activity', label: 'Keyboard Activity' },
@@ -34,6 +34,9 @@ export default function DashboardPage() {
   }, [labId, activeTab]);
 
   useEffect(() => {
+    // Intentional fetch-on-mount/dependency-change pattern (standard React
+    // data-fetching idiom). This rule is overly strict about it here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -57,7 +60,7 @@ export default function DashboardPage() {
           <option value={3}>Lab 3</option>
           <option value={4}>Lab 4</option>
         </select>
-        <button onClick={fetchData} style={{ marginLeft: 12 }}>Refresh</button>
+        <button onClick={() => fetchData()} style={{ marginLeft: 12 }}>Refresh</button>
       </div>
 
       <div style={{ marginBottom: 16 }}>
