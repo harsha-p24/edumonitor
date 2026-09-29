@@ -1,0 +1,64 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/api-service/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/api-service/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: edumonitor
+          POSTGRES_PASSWORD: edumonitor
+          POSTGRES_DB: edumonitor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Load database schema
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=edumonitor psql -h localhost -U edumonitor -d edumonitor -f database/schema.sql
+          PGPASSWORD=edumonitor psql -h localhost -U edumonitor -d edumonitor -f database/indexes.sql
+
+      - name: Build with Maven
+        working-directory: backend/api-service
+        run: mvn -B compile
+
+      - name: Run tests
+        working-directory: backend/api-service
+        run: mvn -B test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/edumonitor
+          SPRING_DATASOURCE_USERNAME: edumonitor
+          SPRING_DATASOURCE_PASSWORD: edumonitor
+
+      - name: Package application
+        working-directory: backend/api-service
+        run: mvn -B package -DskipTests
