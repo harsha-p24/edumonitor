@@ -1,0 +1,62 @@
+name: Docker Build & Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/api-service/**'
+      - 'frontend/**'
+      - 'database/**'
+      - 'docker/**'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/docker-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/api-service/**'
+      - 'frontend/**'
+      - 'database/**'
+      - 'docker/**'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+
+jobs:
+  compose-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create CI .env (throwaway secrets, CI only)
+        run: |
+          cp .env.example .env
+          sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=ci-postgres-password/' .env
+          sed -i 's/^JWT_SECRET=.*/JWT_SECRET=ci-only-jwt-secret-ci-only-jwt-secret-ci-only-jwt-secret-0123456789/' .env
+
+      - name: Validate compose file
+        run: docker compose config --quiet
+
+      - name: Build and start the stack
+        run: docker compose up -d --build --wait --wait-timeout 180
+
+      - name: Smoke test - login through Nginx
+        run: |
+          curl -fsS --retry 30 --retry-delay 2 --retry-all-errors \
+            -X POST http://localhost:8081/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"shruthi.mg@edumonitor.local","password":"password123"}' \
+            | tee /dev/stderr | grep -q '"token"'
+
+      - name: Smoke test - frontend serves the app
+        run: curl -fsS http://localhost:8081/ | grep -qi '<div id="root">'
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs --tail 100
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
