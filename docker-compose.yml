@@ -1,0 +1,51 @@
+name: edumonitor
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edumonitor}
+      POSTGRES_USER: ${POSTGRES_USER:-edumonitor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Run in order on FIRST start only (empty data volume)
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/indexes.sql:/docker-entrypoint-initdb.d/02-indexes.sql:ro
+      - ./database/seed-data.sql:/docker-entrypoint-initdb.d/03-seed-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api-service:
+    build:
+      context: .
+      dockerfile: docker/api-service.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-edumonitor}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-edumonitor}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      APP_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081}
+    expose:
+      - "8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api-service
+    ports:
+      - "${WEB_PORT:-8081}:80"
+
+volumes:
+  db_data:

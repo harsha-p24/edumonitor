@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: '/api',
 });
 
 // Automatically attach the JWT (if we have one) to every outgoing request
