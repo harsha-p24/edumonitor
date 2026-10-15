@@ -41,7 +41,7 @@ goto :wait_docker
 echo       Docker is ready.
 echo.
 echo [2/3] Starting EduMonitor containers - the first run can take several minutes...
-wsl bash -lc "cd %PROJECT_DIR% && bash scripts/start.sh"
+wsl bash -lc "cd %PROJECT_DIR% && bash scripts/start.sh %*"
 if errorlevel 1 (
     echo.
     echo [ERROR] Startup failed - see the messages above.
